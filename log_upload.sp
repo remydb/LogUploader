@@ -8,7 +8,7 @@ public Plugin:myinfo =
         author = "Duckeh",
         description = "Auto-upload match logs to logs.tf",
         version = "1.0",
-        url = "http://www.slowpoke.nl"
+        url = "https://github.com/remydb/LogUploader"
 };
 
 new CURL_Default_opt[][2] = {
