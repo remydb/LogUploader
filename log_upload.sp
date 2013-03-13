@@ -24,7 +24,10 @@ new CURL_Default_opt[][2] = {
 
 #define CURL_DEFAULT_OPT(%1) curl_easy_setopt_int_array(%1, CURL_Default_opt, sizeof(CURL_Default_opt))
 
-new Handle:g_APIKey;
+new Handle:g_APIKey = INVALID_HANDLE;
+new Handle:output_file = INVALID_HANDLE;
+new Handle:dir = INVALID_HANDLE;
+new Int:count;
 
 public OnPluginStart()
 {
@@ -58,8 +61,8 @@ public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
 
         new String:path[40] = "logs/";
         new String:buff[] = "";
-        new Handle:dir = OpenDirectory(path);
-	new Int:count = 0;
+        dir = OpenDirectory(path);
+	count = 0;
 	decl String:APIKey[128];
 	GetConVarString(g_APIKey, APIKey, sizeof(APIKey));
         while(ReadDirEntry(dir, buff, 15))
@@ -82,49 +85,50 @@ public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
                         curl_formadd(postForm, CURLFORM_COPYNAME, "key", CURLFORM_COPYCONTENTS, APIKey, CURLFORM_END);
                         curl_easy_setopt_handle(curl, CURLOPT_HTTPPOST, postForm);
 
-                        new Handle:output_file = curl_OpenFile("output.json", "w");
+                        output_file = curl_OpenFile("output.json", "w");
                         curl_easy_setopt_handle(curl, CURLOPT_WRITEDATA, output_file);
                         curl_easy_setopt_string(curl, CURLOPT_URL, "http://logs.tf/upload");
-
-                        new CURLcode:code = curl_load_opt(curl);
-                        if(code != CURLE_OK) {
-                                CloseHandle(curl);
-                                PrintToChatAll("LogUploader: Plugin encountered problem, nothing uploaded");
-                        }
-			else {
-        	                curl_easy_perform_thread(curl, onComplete, output_file);
-	                        CloseHandle(output_file);
-//	                        CloseHandle(curl);
-	                        new Handle:result = OpenFile("output.json", "r");
-	                        new String:resBuff[256];
-	                        while(ReadFileLine(result, resBuff, sizeof(resBuff)))
-	                        {
-	                                PrintToChatAll("LogUploader: %s", resBuff);
-	                        }
-	                        CloseHandle(result);
-				count++;
-			}
+       	                curl_easy_perform_thread(curl, onComplete);
+			count++;
                 }
         }
-        CloseHandle(dir);
+	checkCount();
+}
+
+public checkCount()
+{
 	if (count == 0)
 	{
 		PrintToChatAll("LogUploader: Could not locate log, nothing uploaded");
+		return;
+	}
+	else
+	{
+		return;
 	}
 }
 
-public onComplete(Handle:hndl, CURLcode: code)
+public onComplete(Handle:hndl, CURLcode:code)
 {
         if(code != CURLE_OK)
         {
                 new String:error_buffer[256];
                 curl_easy_strerror(code, error_buffer, sizeof(error_buffer));
                 CloseHandle(hndl);
-                return;
+		PrintToChatAll("cURLCode error");
         }
 	else
 	{
+		CloseHandle(output_file);
 	        CloseHandle(hndl);
-		return;
+                new Handle:result = OpenFile("output.json", "r");
+		new String:resBuff[256];
+	        while(ReadFileLine(result, resBuff, sizeof(resBuff)))
+	        {
+	        	PrintToChatAll("LogUploader: %s", resBuff);
+                }
+                CloseHandle(result);
 	}
+        CloseHandle(dir);
+	return;
 }
