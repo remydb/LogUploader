@@ -7,7 +7,7 @@ public Plugin:myinfo =
         name = "Log auto-uploader",
         author = "Duckeh",
         description = "Auto-upload match logs to logs.tf",
-        version = "1.0",
+        version = "1.1",
         url = "https://github.com/remydb/LogUploader"
 };
 
@@ -92,9 +92,9 @@ public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
                                 PrintToChatAll("LogUploader: Plugin encountered problem, nothing uploaded");
                         }
 			else {
-        	                code = curl_easy_perform(curl);
+        	                curl_easy_perform_thread(curl, onComplete, output_file);
 	                        CloseHandle(output_file);
-	                        CloseHandle(curl);
+//	                        CloseHandle(curl);
 	                        new Handle:result = OpenFile("output.json", "r");
 	                        new String:resBuff[256];
 	                        while(ReadFileLine(result, resBuff, sizeof(resBuff)))
@@ -113,3 +113,18 @@ public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
 	}
 }
 
+public onComplete(Handle:hndl, CURLcode: code)
+{
+        if(code != CURLE_OK)
+        {
+                new String:error_buffer[256];
+                curl_easy_strerror(code, error_buffer, sizeof(error_buffer));
+                CloseHandle(hndl);
+                return;
+        }
+	else
+	{
+	        CloseHandle(hndl);
+		return;
+	}
+}
