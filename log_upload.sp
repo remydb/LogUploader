@@ -7,7 +7,7 @@ public Plugin:myinfo =
         name = "Log auto-uploader",
         author = "Duckeh",
         description = "Auto-upload match logs to logs.tf",
-        version = "1.1",
+        version = "1.2",
         url = "https://github.com/remydb/LogUploader"
 };
 
@@ -27,6 +27,7 @@ new CURL_Default_opt[][2] = {
 new Handle:g_APIKey = INVALID_HANDLE;
 new Handle:output_file = INVALID_HANDLE;
 new Handle:dir = INVALID_HANDLE;
+new Handle:postForm = INVALID_HANDLE;
 new Int:count;
 
 public OnPluginStart()
@@ -79,7 +80,7 @@ public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
                         PrintToChatAll("LogUploader: Attempting to upload log");
                         new Handle:curl = curl_easy_init();
                         CURL_DEFAULT_OPT(curl);
-                        new postForm = curl_httppost();
+                        postForm = curl_httppost();
                         curl_formadd(postForm, CURLFORM_COPYNAME, "logfile", CURLFORM_FILE, fullPath, CURLFORM_END);
                         curl_formadd(postForm, CURLFORM_COPYNAME, "map", CURLFORM_COPYCONTENTS, map, CURLFORM_END);
                         curl_formadd(postForm, CURLFORM_COPYNAME, "key", CURLFORM_COPYCONTENTS, APIKey, CURLFORM_END);
@@ -129,6 +130,7 @@ public onComplete(Handle:hndl, CURLcode:code)
                 }
                 CloseHandle(result);
 	}
+	CloseHandle(postForm);
         CloseHandle(dir);
 	return;
 }
