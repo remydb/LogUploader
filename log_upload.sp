@@ -28,6 +28,8 @@ new Handle:g_APIKey = INVALID_HANDLE;
 new Handle:output_file = INVALID_HANDLE;
 new Handle:dir = INVALID_HANDLE;
 new Handle:postForm = INVALID_HANDLE;
+new Handle:curl = INVALID_HANDLE;
+new Handle:resultFile = INVALID_HANDLE;
 new Int:count;
 
 public OnPluginStart()
@@ -52,7 +54,7 @@ public Action:Command_LOG(client, args)
 {
         ReplyToCommand(client, "This server will try to automatically upload logs.");
 
-return Plugin_Handled;
+	return Plugin_Handled;
 }
 
 public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
@@ -63,7 +65,7 @@ public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
         new String:path[40] = "logs/";
         new String:buff[] = "";
         dir = OpenDirectory(path);
-	count = 0;
+	count = Int:0;
 	decl String:APIKey[128];
 	GetConVarString(g_APIKey, APIKey, sizeof(APIKey));
         while(ReadDirEntry(dir, buff, 15))
@@ -71,14 +73,14 @@ public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
                 new String:fullPath[50] = "logs/";
                 StrCat(fullPath, 50, buff);
                 new fileTime = GetFileTime(fullPath, FileTime_LastChange);
-                new Int:timeDiff = GetTime() - fileTime;
-                if (timeDiff <= 60 && StrEqual(fullPath, "logs/.", false) == false)
+                new Int:timeDiff = Int:GetTime() - Int:fileTime;
+                if (timeDiff <= Int:60 && StrEqual(fullPath, "logs/.", false) == false)
                 {
                         new String:map[40];
                         GetCurrentMap(map, 40);
                         PrintToChatAll("LogUploader: Found log %s", fullPath);
                         PrintToChatAll("LogUploader: Attempting to upload log");
-                        new Handle:curl = curl_easy_init();
+                        curl = curl_easy_init();
                         CURL_DEFAULT_OPT(curl);
                         postForm = curl_httppost();
                         curl_formadd(postForm, CURLFORM_COPYNAME, "logfile", CURLFORM_FILE, fullPath, CURLFORM_END);
@@ -98,7 +100,7 @@ public GameOverEvent(Handle:event, const String:name[], bool:dontBroadcast)
 
 public checkCount()
 {
-	if (count == 0)
+	if (count == Int:0)
 	{
 		PrintToChatAll("LogUploader: Could not locate log, nothing uploaded");
 		return;
@@ -122,13 +124,13 @@ public onComplete(Handle:hndl, CURLcode:code)
 	{
 		CloseHandle(output_file);
 	        CloseHandle(hndl);
-                new Handle:result = OpenFile("output.json", "r");
+                resultFile = OpenFile("output.json", "r");
 		new String:resBuff[256];
-	        while(ReadFileLine(result, resBuff, sizeof(resBuff)))
+	        while(ReadFileLine(resultFile, resBuff, sizeof(resBuff)))
 	        {
 	        	PrintToChatAll("LogUploader: %s", resBuff);
                 }
-                CloseHandle(result);
+                CloseHandle(resultFile);
 	}
 	CloseHandle(postForm);
         CloseHandle(dir);
