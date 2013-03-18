@@ -70,7 +70,7 @@ SearchLog()
         Format(fullPath, sizeof(fullPath), "logs/%s", fileName);
         new fileTime = GetFileTime(fullPath, FileTime_LastChange);
 	//new fileSize = FileSize(fullPath);
-	PrintToChatAll("%s %i", fileName, curTime - fileTime);
+	//PrintToChatAll("%s %i", fileName, curTime - fileTime);
         if(curTime - fileTime <= 10) {
             UploadLog(fullPath);
             count++;
